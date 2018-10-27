@@ -1,0 +1,5 @@
+[requires]
+lib1/0.1@export/lib1
+
+[generators]
+cmake

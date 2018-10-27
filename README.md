@@ -9,7 +9,9 @@ The application is bastardized from the [repository](https://github.com/memshard
 Thoughts
 ========
 
-Conan seems to be biased towards CMake builds, although other build systems are supported.
+* Conan seems to be biased towards CMake builds, although other build systems are supported.
+* doesn't fix in-compatibilities between compilers (e.g. ```#pragma once```)
+* why do we need to add CONAN LIBS, but not CONAN INCLUDES??
 
 The Example
 =
@@ -66,8 +68,19 @@ Consumer commands
 Offline Installation
 --------------------
 
-?????
-To be useful to many organtisations, Conan must be able to operate in an offline environment. How do you do this?? ?????
+For Conan to be useful in some organisations we need to install it offline.
+
+```
+$ mkdir conan-offline
+$ pip download conan -d conan-offline
+$ tar cvfz conan-offline.tgz conan-offline
+```
+Move ```conan-offline.tgz``` across airgap to a new machine.
+```
+$ tar xvfz conan-offline.tgz
+$ cd conan-offline
+$ pip install conan-18.4.tar.gz -f ./ --no-index
+```
 
 Create Packages
 ---------------
@@ -355,12 +368,117 @@ We have now built a ```lib1``` library, but we have not created a lib1 Conan pac
 
 Creating a lib1 package
 -
+Similar (exactly..) to lib2:
+```
+$ conan new lib1/0.1 -t
+
+Python 2 will soon be deprecated. It is strongly recommended to use Python 3 with Conan:
+https://docs.conan.io/en/latest/installation.html#python-2-deprecation-notice
+
+File saved: conanfile.py
+File saved: test_package/CMakeLists.txt
+File saved: test_package/conanfile.py
+File saved: test_package/example.cpp
+```
+
+A major difference with lib1's conanfile.py is we must include a build_requires metadata statement in the class. This was not obvious to work out. (see [here](https://docs.conan.io/en/latest/reference/conanfile/attributes.html#build-requires))
+
+Also, when Conan builds lib1's test package, we must tell it to use the lib2 package. Again, this was not obvious to work out. 
+
+```
+from conans import ConanFile, CMake, tools
+
+
+class Lib1Conan(ConanFile):
+    name = "lib1"
+    version = "0.1
+...
+    build_requires = "lib2/0.1@export/lib2"
+    requires = "lib2/0.1@export/lib2"
+
+    def source(self):
+...
+```
+After this, we've created  the package for lib1.
 
 Consuming lib1 package in app
 -
 
+Consuming lib1 has already been demonstrated in lib1's test package.
+
+However, to do it manually..
+
+```
+$ mkdir build
+$ cd build
+$ conan install ..
+Configuration:
+[settings]
+os=Macos
+os_build=Macos
+arch=x86_64
+arch_build=x86_64
+compiler=apple-clang
+compiler.version=10.0
+compiler.libcxx=libc++
+build_type=Release
+[options]
+[build_requires]
+[env]
+
+PROJECT: Installing /Users/james/dev/conan-trial/app/conanfile.txt
+Requirements
+    lib1/0.1@export/lib1 from local cache - Cache
+    lib2/0.1@export/lib2 from local cache - Cache
+Packages
+    lib1/0.1@export/lib1:e519e80eca4c5a99fb54de4a0a5df2a62b42f4b4 - Cache
+    lib2/0.1@export/lib2:f8bda7f0751e4bc3beaa6c3b2eb02d455291c8a2 - Cache
+
+lib2/0.1@export/lib2: Already installed!
+lib1/0.1@export/lib1: Already installed!
+PROJECT: Generator cmake created conanbuildinfo.cmake
+PROJECT: Generator txt created conanbuildinfo.txt
+PROJECT: Generated conaninfo.txt
+```
+We must add references to the file conanbuildinfo.txt into the CMakeLists.txt file.
+
+```
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
+ADD_EXECUTABLE(appmain appmain.cpp)
+target_link_libraries(appmain ${CONAN_LIBS})
+```
+
+Now, use cmake to generate and build ..
+```
+$ cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+$ cmake --build .
+```
+
 Distributing packages
 -
+Once a package is developed, we can "push" it up to the conan server. The conan distribution comes with its own conan server. This can be started from the command line.
+
+```
+$ conan_server
+```
+We can the localhost server to the remote list on our local workstation
+
+```
+$ conan remote add my_local_server http://localhost:9300
+```
+Now we can upload from our local cache to the remote server
+
+```
+$ conan upload lib1/0.1@export/lib1 --all -r=my_local_server
+```
+
+
+
+
+
+
 
 Building on different OS's
 -
