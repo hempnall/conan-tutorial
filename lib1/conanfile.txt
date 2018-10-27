@@ -1,10 +1,6 @@
 [requires]
-lib2/0.1@demo/testing9
+lib2/0.1@export/lib2
 
 [generators]
 cmake
-visual_studio
-gcc
-compiler_args
-qmake
-virtualenv
+

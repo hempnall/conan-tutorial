@@ -261,14 +261,97 @@ Finally, we override the package_info method to specify the name of the library 
 We can build the package using the ```conan create``` command.
 
 ```
-$ conan create . demo/lib2
+$ conan create . export/lib2
 ```
-
-
-
 
 Consuming lib2 package from lib1
 -
+
+To consume a package in another application or library we must specify the following:
+* the packages we depend on
+* the build system tools we are using in our current package.
+
+In practice, we can do this by creating a file, ```conanfile.txt```, in the root of our application.
+> Note: we are assuming that our application is built using CMake
+
+```
+[requires]
+lib2/0.1@export/lib2
+
+[generators]
+cmake
+```
+Conan will help us create CMake file that includes all the necessary lib and header directives. To do this, we install the dependecies.
+
+We make a build folder in the root of our lib2 source:
+
+```
+$ mkdir build && cd build
+$ conan info ..
+PROJECT
+    ID: e519e80eca4c5a99fb54de4a0a5df2a62b42f4b4
+    BuildID: None
+    Requires:
+        lib2/0.1@export/lib2
+lib2/0.1@export/lib2
+    ID: f8bda7f0751e4bc3beaa6c3b2eb02d455291c8a2
+    BuildID: None
+    Remote: None
+    URL: <Package recipe repository url here, for issues about the package>
+    License: <Put the package license here>
+    Recipe: Cache
+    Binary: Cache
+    Binary remote: None
+    Creation date: 2018-10-27 12:54:21
+    Required by:
+        PROJECT
+```
+We run ```conan install ..``` to generate a CMake include file to include in our existing cmake file.
+
+```
+$ conan install ..
+Configuration:
+[settings]
+os=Macos
+os_build=Macos
+arch=x86_64
+arch_build=x86_64
+compiler=apple-clang
+compiler.version=10.0
+compiler.libcxx=libc++
+build_type=Release
+[options]
+[build_requires]
+[env]
+
+PROJECT: Installing /Users/james/dev/conan-trial/lib1/conanfile.txt
+Requirements
+    lib2/0.1@export/lib2 from local cache - Cache
+Packages
+    lib2/0.1@export/lib2:f8bda7f0751e4bc3beaa6c3b2eb02d455291c8a2 - Cache
+
+lib2/0.1@export/lib2: Already installed!
+PROJECT: Generator cmake created conanbuildinfo.cmake
+PROJECT: Generator txt created conanbuildinfo.txt
+PROJECT: Generated conaninfo.txt
+Jamess-Mac-mini:build james$ ls
+conanbuildinfo.cmake    conanbuildinfo.txt      conaninfo.txt
+```
+We 'wire' our newly created ```conanbuildinfo.cmake``` file into our existing CMakeLists.txt file.
+
+```
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+```
+We can now generate our Makefiles and build our project.
+
+```
+$ cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+$ cmake --build .
+```
+> What does the ```-G``` option really specify??
+
+We have now built a ```lib1``` library, but we have not created a lib1 Conan package.
 
 Creating a lib1 package
 -
