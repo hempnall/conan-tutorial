@@ -541,6 +541,23 @@ $ bin/app
 
 ### Building on Windows
 
+ensure Conan is in path
+
+```
+c:\ set PATH=%PATH%;%USERPROFILE%\AppData\Roaming\Python\Scripts
+```
+Ensure cmake, git are installed.
+
+The packages are downloaded and compiled when I call
+
+```
+c:\ conan install .. --build missing
+```
+
+However, they are compiled in a way that is not compatible with the main application. 
+* error lnk2038
+* mismatch detected for '_ITERATOR_DEBUG_LEVEL'
+* mismatch detected for 'RuntimeLibrary'
 
 
 
