@@ -479,7 +479,65 @@ $ conan upload lib1/0.1@export/lib1 --all -r=my_local_server
 Building on different OS's
 -
 
+Up to now, the packages have been built on Mac OS X. The recipes (the Conanfiles) are not portable. With just a few tweaks they will work on Linux and Windows.
+
+I chose to make v0.2 of the package and upload it.
+```
+from conans import ConanFile, CMake, tools
+
+class Lib2Conan(ConanFile):
+    name = "lib2"
+    version = "0.2"
+...
+    generators = "cmake"
+
+    def source(self):
+        self.run("git clone https://github.com/hempnall/conan-tutorial.git")
+        self.run("cd conan-tutorial/lib2")
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure(source_folder="conan-tutorial/lib2")
+        cmake.build()
+
+    def package(self):
+        self.copy("*.h", dst="include", src="conan-tutorial/lib2")
+...
+```
+We can specify wildcards in the requires declaration in lib1's conanfile. For example:
+
+```
+    build_requires = "lib2/[>=0.2]@export/lib2"
+    requires = "lib2/[>=0.2]@export/lib2"
+```
+
+We can build a simple app using a conanfile.txt:
+
+```
+[requires]
+lib1/[>=0.2]@export/lib2
+
+[generators]
+cmake
+```
+
 ### Building on CentOS
+
+```
+$ git clone <this repo>
+$ conan remote add my_local_server http://my_local_server:9300
+$ cd app
+$ mkdir build && cd build
+$ conan install .. --build=missing
+```
+The missing dependencies are downloaded and built on linux.
+
+```
+$ cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+$ cmake --build .
+$ bin/app
+... app runs ...
+```
 
 ### Building on Windows
 
