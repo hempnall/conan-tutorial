@@ -1,1 +1,5 @@
-*/build
+app/build
+lib1/build
+lib2/build
+pkg/lib1/build
+pkg/lib2/build

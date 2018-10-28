@@ -234,6 +234,8 @@ class Lib2Conan(ConanFile):
 ```
 In the ```source```, we would like to get the source of the package from this repository. We can use an absolute URL for this.
 
+> Note: The copy command in the code below is not portable. It only works on my machine. The copy command must download the source from a universally referencable location.
+
 ```
     def source(self):
         self.run("cp -r /path/to/lib2 .")
@@ -474,14 +476,12 @@ Now we can upload from our local cache to the remote server
 $ conan upload lib1/0.1@export/lib1 --all -r=my_local_server
 ```
 
-
-
-
-
-
-
 Building on different OS's
 -
+
+### Building on CentOS
+
+### Building on Windows
 
 
 
